@@ -74,7 +74,9 @@ def get_doc(filename):
     if filename not in DOCS_METADATA:
         abort(404, description=f"Document '{filename}' not found.")
 
-    filepath = os.path.join(DOCS_DIR, filename)
+    # Use only the basename to prevent path traversal
+    safe_filename = os.path.basename(filename)
+    filepath = os.path.join(DOCS_DIR, safe_filename)
     if not os.path.isfile(filepath):
         abort(404, description=f"Document file '{filename}' is not available.")
 
@@ -103,4 +105,4 @@ def method_not_allowed(error):
 
 
 if __name__ == "__main__":
-    app.run(debug=True, port=5000)
+    app.run(debug=False, port=5000)
