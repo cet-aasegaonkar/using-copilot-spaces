@@ -1,0 +1,293 @@
+{
+  "info": {
+    "name": "OctoAcme Project Management API",
+    "_postman_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "description": "Postman test collection for the OctoAcme Project Management API.\n\nCovers health check, listing documentation, fetching individual documents, and error handling.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://127.0.0.1:5000",
+      "type": "string",
+      "description": "Base URL of the OctoAcme API server"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health Check",
+      "item": [
+        {
+          "name": "GET /api/health - returns ok status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "health"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response is JSON', function () {",
+                  "    pm.response.to.be.json;",
+                  "});",
+                  "",
+                  "pm.test('Status field is ok', function () {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json.status).to.eql('ok');",
+                  "});",
+                  "",
+                  "pm.test('Service name is present', function () {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json.service).to.be.a('string').and.not.empty;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "List Documents",
+      "item": [
+        {
+          "name": "GET /api/docs - returns list of all docs",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/docs",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "docs"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response is JSON', function () {",
+                  "    pm.response.to.be.json;",
+                  "});",
+                  "",
+                  "pm.test('Response contains docs array', function () {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json.docs).to.be.an('array');",
+                  "});",
+                  "",
+                  "pm.test('Count matches number of docs returned', function () {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json.count).to.eql(json.docs.length);",
+                  "});",
+                  "",
+                  "pm.test('Each doc has required fields', function () {",
+                  "    var json = pm.response.json();",
+                  "    json.docs.forEach(function (doc) {",
+                  "        pm.expect(doc).to.have.property('filename');",
+                  "        pm.expect(doc).to.have.property('title');",
+                  "        pm.expect(doc).to.have.property('description');",
+                  "    });",
+                  "});",
+                  "",
+                  "pm.test('At least one document is returned', function () {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json.count).to.be.above(0);",
+                  "});",
+                  "",
+                  "pm.test('Overview doc is present in the list', function () {",
+                  "    var json = pm.response.json();",
+                  "    var filenames = json.docs.map(function (d) { return d.filename; });",
+                  "    pm.expect(filenames).to.include('octoacme-project-management-overview.md');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Get Individual Document",
+      "item": [
+        {
+          "name": "GET /api/docs/{filename} - returns document content",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/docs/octoacme-project-management-overview.md",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "docs", "octoacme-project-management-overview.md"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response is JSON', function () {",
+                  "    pm.response.to.be.json;",
+                  "});",
+                  "",
+                  "pm.test('Response contains filename field', function () {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json.filename).to.eql('octoacme-project-management-overview.md');",
+                  "});",
+                  "",
+                  "pm.test('Response contains title field', function () {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json.title).to.be.a('string').and.not.empty;",
+                  "});",
+                  "",
+                  "pm.test('Response contains content field', function () {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json.content).to.be.a('string').and.not.empty;",
+                  "});",
+                  "",
+                  "pm.test('Content contains expected OctoAcme heading', function () {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json.content).to.include('OctoAcme');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /api/docs/{filename} - roles and personas document",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/docs/octoacme-roles-and-personas.md",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "docs", "octoacme-roles-and-personas.md"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response is JSON', function () {",
+                  "    pm.response.to.be.json;",
+                  "});",
+                  "",
+                  "pm.test('Filename matches requested document', function () {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json.filename).to.eql('octoacme-roles-and-personas.md');",
+                  "});",
+                  "",
+                  "pm.test('Title field is not empty', function () {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json.title).to.be.a('string').and.not.empty;",
+                  "});",
+                  "",
+                  "pm.test('Content field is not empty', function () {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json.content).to.be.a('string').and.not.empty;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Error Handling",
+      "item": [
+        {
+          "name": "GET /api/docs/{filename} - 404 for unknown document",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/docs/nonexistent-document.md",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "docs", "nonexistent-document.md"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 404', function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});",
+                  "",
+                  "pm.test('Response is JSON', function () {",
+                  "    pm.response.to.be.json;",
+                  "});",
+                  "",
+                  "pm.test('Response contains error field', function () {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json).to.have.property('error');",
+                  "});",
+                  "",
+                  "pm.test('Response contains message field', function () {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json).to.have.property('message');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /api/unknown-route - 404 for unknown route",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/unknown-route",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "unknown-route"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 404', function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
