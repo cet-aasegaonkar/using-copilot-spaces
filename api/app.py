@@ -9,40 +9,53 @@ from flask import Flask, jsonify, abort
 
 app = Flask(__name__)
 
-DOCS_DIR = os.path.join(os.path.dirname(__file__), "..", "docs")
+_DOCS_DIR = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "docs"))
 
+# Each entry stores a pre-computed, trusted absolute filepath alongside metadata.
+# File paths are built at module load time from hardcoded filenames so that no
+# user-supplied input is ever used in a path construction call.
 DOCS_METADATA = {
     "octoacme-project-management-overview.md": {
         "title": "OctoAcme Project Management Overview",
         "description": "Concise introduction to how OctoAcme runs projects.",
+        "filepath": os.path.join(_DOCS_DIR, "octoacme-project-management-overview.md"),
     },
     "octoacme-project-initiation.md": {
         "title": "Project Initiation",
         "description": "Steps and artifacts for kicking off a new project.",
+        "filepath": os.path.join(_DOCS_DIR, "octoacme-project-initiation.md"),
     },
     "octoacme-project-planning.md": {
         "title": "Project Planning",
         "description": "Planning scope, resources, milestones and dependencies.",
+        "filepath": os.path.join(_DOCS_DIR, "octoacme-project-planning.md"),
     },
     "octoacme-execution-and-tracking.md": {
         "title": "Execution and Tracking",
         "description": "Guidelines for building, tracking and iterating during delivery.",
+        "filepath": os.path.join(_DOCS_DIR, "octoacme-execution-and-tracking.md"),
     },
     "octoacme-risks-and-communication.md": {
         "title": "Risks and Communication",
         "description": "Risk management and communication strategies.",
+        "filepath": os.path.join(_DOCS_DIR, "octoacme-risks-and-communication.md"),
     },
     "octoacme-release-and-deployment.md": {
         "title": "Release and Deployment",
         "description": "Process for deploying and announcing releases.",
+        "filepath": os.path.join(_DOCS_DIR, "octoacme-release-and-deployment.md"),
     },
     "octoacme-retrospective-and-continuous-improvement.md": {
         "title": "Retrospective and Continuous Improvement",
         "description": "Capturing learnings and driving process improvement.",
+        "filepath": os.path.join(
+            _DOCS_DIR, "octoacme-retrospective-and-continuous-improvement.md"
+        ),
     },
     "octoacme-roles-and-personas.md": {
         "title": "Roles and Personas",
         "description": "Defined roles, responsibilities and personas in OctoAcme projects.",
+        "filepath": os.path.join(_DOCS_DIR, "octoacme-roles-and-personas.md"),
     },
 }
 
@@ -57,10 +70,10 @@ def health():
 def list_docs():
     """Return a list of all available process documentation files."""
     docs = []
-    for filename, meta in DOCS_METADATA.items():
+    for doc_name, meta in DOCS_METADATA.items():
         docs.append(
             {
-                "filename": filename,
+                "filename": doc_name,
                 "title": meta["title"],
                 "description": meta["description"],
             }
@@ -71,19 +84,19 @@ def list_docs():
 @app.route("/api/docs/<string:filename>", methods=["GET"])
 def get_doc(filename):
     """Return the content of a specific process documentation file."""
-    if filename not in DOCS_METADATA:
+    meta = DOCS_METADATA.get(filename)
+    if meta is None:
         abort(404, description=f"Document '{filename}' not found.")
 
-    # Use only the basename to prevent path traversal
-    safe_filename = os.path.basename(filename)
-    filepath = os.path.join(DOCS_DIR, safe_filename)
+    # Use the pre-computed trusted filepath from our metadata dict,
+    # never the user-supplied filename, to prevent path traversal.
+    filepath = meta["filepath"]
     if not os.path.isfile(filepath):
-        abort(404, description=f"Document file '{filename}' is not available.")
+        abort(404, description="Document file is not available.")
 
     with open(filepath, "r", encoding="utf-8") as f:
         content = f.read()
 
-    meta = DOCS_METADATA[filename]
     return jsonify(
         {
             "filename": filename,
